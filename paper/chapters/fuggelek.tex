@@ -1,0 +1,257 @@
+\chapter*{Függelék}
+\addcontentsline{toc}{chapter}{Függelék}
+% Ez majd még máshogy lesz, de egyelőre így volt a legegyszerűbb
+
+\section*{CryptID – WebIDL definíciók}
+\addcontentsline{toc}{section}{CryptID – WebIDL definíciók}
+
+\lstinputlisting[language=WebIDL]{./code/cryptid.webidl}
+
+\pagebreak
+
+\section*{CryptID – Példaprogram}
+\addcontentsline{toc}{section}{CryptID – Példaprogram}
+
+\lstinputlisting[language=JavaScript, escapechar=^, showstringspaces=false]{./code/application-development-with-cryptid.js}
+
+\pagebreak
+
+\section*{CryptID – Teljesítmény}
+\addcontentsline{toc}{section}{CryptID – Teljesítmény}
+
+\subsection*{A mérésekhez használt környezetek}
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{|| l | c ||}
+  \hline
+  Paraméter & Érték \\
+  \hline \hline
+  Típus        & Dell Inspiron 5567 (2017) \\
+  Processzor   & i7-7500U, 2,7 GHz \\
+  Memória      & 16 GB, DDR4, 2133 MHz \\
+  \hline
+  \end{tabular}
+\caption{Desktop hardverkonfiguráció.}  
+\label{Fuggelek::Table::BenchmarkDesktopHardware}
+\end{table}
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{|| l | c ||}
+  \hline
+  Szoftver & Verzió \\
+  \hline \hline
+  Operációs rendszer & Ubuntu 16.04.4 LTS \\
+  \hline
+  emscripten & 1.38.8 \\
+  gcc & 5.4.0 20160609 \\
+  Node.js & v8.9.1 \\
+  \hline
+  \end{tabular}
+\caption{Desktop natív és Node.js szoftverkonfiguráció.}  
+\label{Fuggelek::Table::BenchmarkDesktopNativeSoftware}
+\end{table}
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{|| l | c ||}
+  \hline
+  Szoftver & Verzió \\
+  \hline \hline
+  Operációs rendszer & Windows 10 Education, Version 1803 (OS Build 17134.35) \\
+  \hline
+  Firefox Quantum & 62.0.3 \\
+  \hline
+  \end{tabular}
+\caption{Desktop Firefox szoftverkonfiguráció.}  
+\label{Fuggelek::Table::BenchmarkDesktopFirefoxSoftware}
+\end{table}
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{|| l | c ||}
+  \hline
+  Paraméter & Érték \\
+  \hline \hline
+  Típus        & Nokia 6.1 TA-1043 \\
+  Processzor   & Qualcomm Snapdragon 630, 2.2 GHz \\
+  Memória      & 3 GB, LPDDR4, 1333 MHz \\
+  \hline
+  \end{tabular}
+\caption{Mobil hardverkonfiguráció.}  
+\label{Fuggelek::Table::BenchmarkMobileHardware}
+\end{table}
+
+\begin{table}[H]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{|| l | c ||}
+  \hline
+  Szoftver & Verzió \\
+   \hline \hline
+  Operációs rendszer & Android 8.1.0 - Kernel 4.4.78-perf+ \\
+  \hline
+  Chrome for Mobile & 68.0.3440.91 \\
+  \hline
+  \end{tabular}
+\caption{Mobil szoftverkonfiguráció.}  
+\label{Fuggelek::Table::BenchmarkMobileSoftware}
+\end{table}
+
+\begin{table}[H]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{|| l | c ||}
+  \hline
+  Könyvtár & Verzió \\
+  \hline \hline
+  libpari-dev                        & 2.11.0-1 \\
+  \hline
+  MIRACL                  & commit 4bd13901519d329c6c1369fb3322b52fe10c7a6e\footnote{\url{https://github.com/miracl/MIRACL}} \\
+  \hline
+  \end{tabular}
+\caption{A felhasznált könyvtárak verziói.}  
+\label{Fuggelek::Table::BenchmarkLibraries}
+\end{table}
+
+\subsection*{Mérési metodológia}
+
+A teljesítménymérésekhez minden platformon a Google Benchmark\footnote{\url{https://github.com/google/benchmark}, verzió: commit af441fc1143e33e539ceec4df67c2d95ac2bf5f8} könyvtárat használtuk. 
+
+Egy teszt egy adott függvény adott bementre történő $n$ egymást követő lefuttatását jelenti (ezeket iterációknak nevezzük), ahol $n$ értékét a Benchmark könyvtár határozza meg a függvény sebességének megfelelően. A teszt eredménye az iterációk során mért idők átlaga.
+
+Az egyes függvényekhez rendelt végleges időket függvényenként húsz, a fentieknek megfelelő teszt eredményének átlagából számoltuk.
+
+Azért választottuk az átlagidőt a futási idő jellemzésére, mert a teszteredmények elemzése során úgy láttuk, hogy ez írja le legjobban az mérésekben rejlő mintázatokat, valamint szemantikát tekintve is ezt gondoltuk a felhasználói élménnyel leginkább párhuzamba hozható metrikának.
+
+\subsection*{Mérési eredmények}
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{| l | c | c | c | c |}
+  \hline
+   & MIRACL & PARI & CryptID C & CryptID WebAssembly \\
+  \hline 
+  LOWEST & \SI{9,32e3}{\nano\second} & \SI{3,55e6}{\nano\second} & \SI{6,33e6}{\nano\second} & \SI{1,61e7}{\nano\second} \\
+  \hline 
+  LOW    & \SI{2,02e4}{\nano\second} & \SI{2,03e7}{\nano\second} & \SI{3,16e7}{\nano\second} & \SI{1,01e8}{\nano\second} \\
+  \hline 
+  MEDIUM & \SI{3,22e4}{\nano\second} & \SI{6,49e7}{\nano\second} & \SI{8,94e7}{\nano\second} & \SI{3,06e8}{\nano\second} \\
+  \hline 
+  HIGH   & \SI{1,01e5}{\nano\second} & \SI{7,32e8}{\nano\second} & \SI{9,55e8}{\nano\second} & \SI{3,73e9}{\nano\second} \\
+  \hline
+  \end{tabular}
+\caption{A skaláris szorzás futási ideje.}  
+\label{Fuggelek::Table::BenchmarkEllipticMultiplication}
+\end{table}
+
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{| l | c | c |}
+  \hline
+   & CryptID C & CryptID WebAssembly \\
+  \hline 
+  LOWEST & \SI{6,89e6}{\nano\second} & \SI{2,16e7}{\nano\second} \\
+  \hline 
+  LOW    & \SI{3,32e7}{\nano\second} & \SI{1,48e8}{\nano\second} \\
+  \hline 
+  MEDIUM & \SI{9,61e7}{\nano\second} & \SI{4,23e8}{\nano\second} \\
+  \hline 
+  HIGH   & \SI{5,01e8}{\nano\second} & \SI{2,36e9}{\nano\second} \\
+  \hline
+  \end{tabular}
+\caption{A Tate párosítás futási ideje.}  
+\label{Fuggelek::Table::BenchmarkTatePairing}
+\end{table}
+
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{| l | c | c |}
+  \hline
+   & CryptID C & CryptID WebAssembly \\
+  \hline 
+  LOWEST & \SI{52,03}{\milli\second} & \SI{156,36}{\milli\second} \\
+  \hline 
+  LOW    & \SI{325,06}{\milli\second} & \SI{1403,92}{\milli\second} \\
+  \hline 
+  MEDIUM & \SI{1125,28}{\milli\second} & \SI{4810,54}{\milli\second} \\
+  \hline 
+  HIGH   & \SI{14333,77}{\milli\second} & \SI{62410,21}{\milli\second} \\
+  \hline
+  \end{tabular}
+\caption{A \textit{setup} futási ideje}  
+\label{Fuggelek::Table::BenchmarkSetup}
+\end{table}
+
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{| l | c | c |}
+  \hline
+   & CryptID C & CryptID WebAssembly \\
+  \hline 
+  LOWEST & \SI{25,9884}{\milli\second} & \SI{103,5176}{\milli\second} \\
+  \hline 
+  LOW    & \SI{159,6002}{\milli\second} & \SI{707,2616}{\milli\second} \\
+  \hline 
+  MEDIUM & \SI{452,0390}{\milli\second} & \SI{2060,4003}{\milli\second} \\
+  \hline 
+  HIGH   & \SI{4608,6934}{\milli\second} & \SI{24123,1172}{\milli\second} \\
+  \hline
+  \end{tabular}
+\caption{Az \textit{extract} futási ideje.}  
+\label{Fuggelek::Table::BenchmarkExtract}
+\end{table}
+
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{| l | c | c | c | c |}
+  \hline
+   & Natív C & Node.js Wasm & Desktop Firefox Wasm & Mobil Chrome Wasm \\
+  \hline 
+  LOWEST & \SI{30,6817}{\milli\second} & \SI{97,2830}{\milli\second} & \SI{93,7125}{\milli\second} & \SI{400,9150}{\milli\second} \\
+  \hline 
+  LOW    & \SI{128,3681}{\milli\second} & \SI{460,7209}{\milli\second} & \SI{484,1000}{\milli\second} & \SI{2088,7400}{\milli\second} \\
+  \hline 
+  MEDIUM & \SI{291,9348}{\milli\second} & \SI{1140,2769}{\milli\second} & \SI{1190,8000}{\milli\second} & \SI{5277,2400}{\milli\second} \\
+  \hline 
+  HIGH   & \SI{2554,0214}{\milli\second} & \SI{11108,9214}{\milli\second} & \SI{11422,1000}{\milli\second} & \SI{55161,8300}{\milli\second} \\
+  \hline
+  \end{tabular}
+\caption{Az \textit{encrypt} futási ideje.}  
+\label{Fuggelek::Table::BenchmarkEncrypt}
+\end{table}
+
+
+\begin{table}[h!]
+\captionsetup{justification=centering}
+\centering
+  \begin{tabular}{| l | c | c | c | c |}
+  \hline
+   & Natív C & Node.js Wasm & Desktop Firefox Wasm & Mobil Chrome Wasm \\
+  \hline 
+  LOWEST & \SI{23,6065}{\milli\second} & \SI{78,1959}{\milli\second} & \SI{73,9000}{\milli\second} & \SI{322,1050}{\milli\second} \\
+  \hline 
+  LOW    & \SI{82,7325}{\milli\second} & \SI{335,8183}{\milli\second} & \SI{327,5500}{\milli\second} & \SI{1432,9000}{\milli\second} \\
+  \hline 
+  MEDIUM & \SI{193,3273}{\milli\second} & \SI{805,8475}{\milli\second} & \SI{881,4000}{\milli\second} & \SI{3869,7500}{\milli\second} \\
+  \hline 
+  HIGH   & \SI{1469,1147}{\milli\second} & \SI{7112,7990}{\milli\second} & \SI{7397}{\milli\second} & \SI{32273,5100}{\milli\second} \\
+  \hline
+  \end{tabular}
+\caption{A \textit{decrypt} futási ideje.}  
+\label{Fuggelek::Table::BenchmarkDecrypt}
+\end{table}

@@ -1,0 +1,21 @@
+\chapter{Bevezetés}
+
+A dolgozatunkban az általunk fejlesztett CryptID Identity-based Encryption (IBE) könyvtárat mutatjuk be. Ez a Boneh-Franklin IBE egy újszerű implementációja, mely reményeink szerint nemcsak egy újabb megvalósítás, hanem valóban olyan jellemzőkkel bír, melyek a már rendelkezésre álló megoldások versenytársává avathatják. Ehhez természetesen olyan sajátosságok szükségesek, melyek megkülönböztetik a többi könyvtártól, mi több, bizonyos összevetésben azok elé helyezik. Úgy gondoljuk, hogy a platformfüggetlen működés, a strukturált publikus kulcs és a fejlesztő-orientált interfész ilyenek lehetnek.
+
+\section{Identity-based Encryption}
+
+A nyilvános kulcsú kriptográfia egy fiatal ága az IBE, melynek ötletét Adi Shamir fogalmazta meg 1984-ben. Egy olyan sémát írt le, melyben nincsen szükség sem a nyilvános, sem a titkos kulcsok előzetes cseréjére vagy nyilvántartására: a nyilvános kulcsok egyértelmű, mindenki által ismert azonosítók (például egy telefonszám), míg a titkos kulcsokat egy megbízható harmadik fél, a Private Key Generator (PKG) hozza létre. Ekképpen az IBE nem igényel a Public Key Infrastructure-höz (PKI) hasonló rendszert a kulcsok kezeléséhez, hiszen az adatok titkosításához szükséges kulcsokat a rendszer minden résztvevője ismeri, a visszafejtéshez pedig egyetlen féllel, a PKG-vel kell kapcsolatba lépni. Habár utóbbi aggályos lehet, hiszen a felhasználóknak nincsen befolyása a titkos kulcs előállítására, azonban ezt a feladatot a PKI esetén is egy külső fél, a \textit{registration authority} (RA) végzi \cite{Buchmann::IntroductionToPublicKeyInfrastructures}. 
+
+Az IBE gyakorlatban is használható első leírását Boneh és Franklin adta 2001-ben. Ez a rendszer azonban csak az első volt a sorban: napjainkig számos különböző IBE-rendszer született meg, melyek rendre eltérő jellemzőkkel rendelkeznek. Az elméleti előrelépéseket követte a gyakorlat is, hiszen a fejlesztők mára több implementáció közül is választhatnak.
+
+\section{Motiváció}
+
+Az internetre csatlakozó mobil eszközök robbanásszerű elterjedése igényt ébresztett hatékony és hordozható kriptográfiai rutinok iránt. Ugyanakkor a jelenlegi megvalósítások egyáltalán nem, vagy csak kevésbé veszik figyelembe ezt az igényt. Emiatt a CryptID kifejezetten a platformfüggetlenséget szem előtt tartva készült, legyen szó asztali, mobil vagy IoT eszközökről.
+
+A publikus kulcsban elhelyezhető metaadatok ötlete már Boneh és Franklin cikkében is megjelenik \citeyear{Boneh::IdentityBasedEncryptionFromTheWeilPairing}. Az elképzelés lényege, hogy az azonosítón felül további adatokat, például egy dátumot is elhelyezünk a publikus kulcsban. Az elképzelést annyira előremutatónak találtuk, hogy a CryptID ehhez teljes mértékű támogatást biztosít – a publikus kulcsok ugyanis JSON objektumokként reprezentálhatók.
+
+Mi motiválta viszont a fejlesztő-orientált interfész létrehozását? Az ismert könyvtárakat áttekintve azt vettük észre, hogy bár nagyszerű kriptográfiai képességekkel rendelkeznek, azonban helyes működtetésükhöz számottevő matematikai és kriptográfiai háttér szükséges. Annak érdekében, hogy az IBE-t több fejlesztő tudja helyesen integrálni, a \mbox{Google} Tinkkel\footnote{\url{https://github.com/google/tink}} azonos mottót választva egy olyan könyvtár elkészítését tűztük ki célul, melyet könnyű jól használni és nehéz (vagy nehezebb) rosszul.
+
+\section{A dolgozat felépítése}
+
+A dolgozatunk első három fejezete bevezető jellegű: előbb az elliptikus görbe kriptográfián, valamint az IBE-n keresztül a matematikai alapokat tárgyaljuk, majd a WebAssembly formájában a technológiai hátteret ismertetjük. Ezt követi a dolgozat fő eredményét jelentő CryptID könyvtár rétegről rétegre történő részletes bemutatása, kiemelt figyelmet szentelve a teljesítmény elemzésének. Zárásként két alkalmazás szerepel, melyek a Crypt\-ID nagyobb léptékű programokba történő integrálását demonstrálják.

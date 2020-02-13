@@ -1,0 +1,156 @@
+\chapter{Alkalmazások}
+\label{Chapter::Alkalmazasok}
+
+Az \dotref{Section::CryptID::ApplicationDevelopment} alfejezet API-használatra fókuszáló példaprogramja után ebben a fejezetben nagyobb léptékű alkalmazásokat mutatunk be. A fejezet célja, hogy valós, gyakorlati példákat adjon olyan webalkalmazásokra, melyek kulcsösszetevője lehet az IBE, s ezáltal a CryptID.
+
+Előbb egy ténylegesen implementált webalkalmazást – CrpytID.email – ismertetünk, majd Személyre szabott zárthelyi néven egy rövid esettanulmány formájában vázoljuk az IBE egy lehetséges egyetemi felhasználását.
+
+\section{Implementáció – CryptID.email}
+
+A CryptID.email egy fájltitkosításra szolgáló platformfüggetlen webalkalmazás, melynek legfontosabb jellemzői a következők:
+
+\begin{outdentlist}
+    \item[]\textbf{Email, mint azonosító.}
+    Az IBE-t használó alkalmazások implementációjában kulcsfontosságú kérdés, hogy mit használjunk azonosítóként. Míg egy vállalati belső alkalmazás esetén ez a legtöbbször adott (például LDAP útján), addig egy nyílt, tetszőleges felhasználó által igénybe vehető szolgáltatás esetén ez korántsem egyértelmű.
+    
+    Az azonosító kiválasztásának két kiemelkedő szempontja az azonosító elterjedtsége (hány felhasználó rendelkezik vele?) valamint ellenőrizhetősége (mennyire bonyolult ellenőrizni, hogy egy azonosító valóban egy adott entitáshoz tartozik?). Ezek figyelembevételével a CrpytID.email esetén az email címet választottuk azonosítóként, hiszen az internetfelhasználók zöme rendelkezik legalább egy email címmel, valamint ellenőrizni is egyszerűbb, mint egy telefonszámot vagy egy Facebook-hozzáférést.
+
+    \item[]\textbf{Szimmetrikus tartalomtitkosítás.}
+    Az aszimmetrikus módszerek (mint az IBE) alacsony teljesítményük miatt nem alkalmasak nagyobb adattömeg titkosítására. Emiatt gyakori megoldás, hogy az aszimmetrikus kriptográfiát egy nagyságrendekkel gyorsabb szimmetrikus módszer kulcsának titkosítására használják. 
+
+    Ezen ötlet jelenik meg a CryptID.email implementációjában is: Először generálunk egy véletlenszerű bájtsorozatot, mely a fájlok tartalmának titkosításához használt AES (\textit{Advanced Encryption Standard}) eljárás kulcsa lesz. Az AES titkosítás végeztével pedig az említett kulcsot a CryptID könyvtárral aszimmmetrikusan titkosítjuk.
+
+    Ennek köszönhetően egyszerre élvezhetjük az IBE nyújtotta előnyöket, valamint a szimmetrikus titkosítás gyorsaságát.
+
+    \item[]\textbf{Kliensoldali titkosítás.}
+    Az IBE meghatározó jellemzője, hogy a visszafejtésre alkalmas privát kulcsokat egy megbízható fél, a PKG generálja. Ez azonban azt is jelenti, hogy a PKG tetszőleges publikus kulcshoz képes privát kulcsot előállítani. Ugyanakkor ez a lehetőség csak akkor jelent kockázatot, ha a PKG (vagy valamely, azzal közvetlen kapcsolatban álló komponens) a publikus kulcson kívül az azzal titkosított adatokhoz is hozzáfér.
+
+    Ennek elkerülésére a CryptID.email kliensoldali titkosítást valósít meg, azaz mind a titkosítás, mind a visszafejtés úgy történik, hogy a publikus kulcson kívül semmilyen adat nem hagyja el a felhasználó eszközét.
+
+\end{outdentlist}
+
+A következőkben a titkosítás, majd a visszafejtés lépésein keresztül ismertetjük az alkalmazás megvalósításának részleteit.
+
+\subsection{Titkosítás}
+
+\subsubsection{A fájl beolvasása}
+
+A titkosítási folyamat első lépése – természetesen a megfelelő webhely felkeresését követően – a titkosítandó fájl beolvasása. Ez a fájl teljes tartalmának memóriába történő beolvasását jelenti. Ugyan a CryptID.email által használt FileReader API\footnote{\url{https://w3c.github.io/FileAPI/#dfn-filereader} – \url{https://caniuse.com/#feat=filereader}} lehetővé teszi, hogy egyszerre csak a fájl egy kisebb szeletét olvassuk be és dolgozzuk fel (azaz \textit{streameljük}), azonban a böngészők jelenleg nem biztosítanak hatékony \textit{streaming} titkosítási eljárásokat, így ennek megfelelő kihasználása nem lehetséges.
+
+\subsubsection{A fájl tartalmának titkosítása}
+
+Miután a memóriában rendelkezésre áll a titkosítandó adat, a CryptID.email a WebCrypto API-n\footnote{\url{https://www.w3.org/TR/WebCryptoAPI/} – \url{https://caniuse.com/#feat=cryptography}} keresztül előbb generál egy AES kulcsot, majd ugyanezen API-t használva AES-GCM (\textit{Galois/Counter Mode}) blokktitkosítással rejtjelezi a bemenetet.
+
+Ezzel a memóriában már készen áll egy szimmetrikus privát kulcs, valamint az ezzel titkosított adattömeg.
+
+\subsubsection{Címzett kiválasztása}
+
+Az IBE titkosítás megkezdése előtt a felhasználónak meg kell adnia a címzett email címét, ami a publikus kulcsban szereplő azonosítót jelenti.
+
+\subsubsection{Publikus paraméterek lekérése}
+
+A szimmetrikus kulcs titkosítása előtt szükséges a publikus IBE paraméterek beszerzése. Ezeket a szerver szolgáltatja, mely a paramétereken felül egy azokhoz köthető azonosítót is elküld a kliensnek. Erre azért van szükség, mert a szerver havonta új publikus paramétereket és mesterkulcsot generál (a \texttt{CryptID.setup} függvényt igénybe véve), viszont a korábban titkosított adatok feloldására ezek természetesen nem alkalmasak, így tárolni és azonosítani kell őket.
+
+\subsubsection{A szimmetrikus kulcs titkosítása}
+
+A következő lépés a fájl tartalmának rejtjelezéséhez használt szimmetrikus kulcs titkosítása. Ez a CryptID könyvtár \texttt{encrypt} függvényén keresztül történik, az előző lépés során megszerzett publikus paraméterek és az email címből képzett publikus kulcs segítségével.
+
+\subsubsection{A titkos fájl összeállítása}
+
+A CryptID.email a titkosított tartalmat nem juttatja el a címzetthez – arról a felhasználónak kell gondoskodnia. Ennek elősegítésére a CryptID.email létrehoz egy titkos fájlt, mely a következő összetevőket foglalja magában:
+
+\begin{outdentlist}
+    \item[]\textbf{Eredeti fájlnév.}
+    A titkosított fájlhoz tartozó eredeti fájlnévre elsősorban a kiterjesztés megőrzése miatt van szükség, mely számos operációs rendszeren kitüntetett jelentéssel bír.
+
+    \item[]\textbf{Publikus paraméterek.}
+    A szimmetrikus kulcs titkosításához felhasznált publikus IBE paraméterek azonosítója. A CryptID.email szerveroldali komponense ez alapján tudja megkeresni a privát kulcs generálásához szükség mesterkulcsot.
+
+    \item[]\textbf{Titkosított szimmetrikus kulcs.}
+    Az IBE-titkosított AES kulcs.
+
+    \item[]\textbf{Titkosított fájltartalom.} 
+    Az eredeti fájl tartalma AES-titkosítva.
+\end{outdentlist}
+
+A titkos fájlt ezután a felhasználó a memóriából a háttértárra mentheti, majd igény szerint továbbíthatja.
+
+\subsection{Visszafejtés}
+
+A visszafejtés lépéssora ott veszi fel a fonalat, hogy a felhasználó valamilyen módon hozzájutott egy, a CryptID.emailen keresztül előállított titkos fájlhoz, és szeretné visszafejteni az ebben tartalmazott eredeti fájlt. A visszafejtés azonban csak egy megfelelő privát kulcs birtokában sikerülhet. A privát kulcs beszerzésehez pedig a felhasználónak egy azonosítási folyamaton keresztül igazolnia kell az email címét.
+
+Tekintve, hogy a visszafejtési folyamat a titkosítás inverze, megjelennek hasonló lépések, mint például a fájl memóriába olvasása. Ezek részletes ismertetését itt elhagyjuk, és csak a lényeges pontokat mutatjuk be részletesen.
+
+\subsubsection{Email cím megadása}
+
+Az azonosítási folyamat elindításához a felhasználónak először meg kell adnia az email címét a CryptID.email weboldalán.
+
+\subsubsection{Megerősítő email kiküldése}
+
+A CryptID.email szerveroldali komponense ezután generál egy nyolc karakter hosszúságú, úgynevezett email tokent, melyet SendGriden\footnote{\url{https://sendgrid.com/}} keresztül kiküld a felhasználó által megadott email címre. A token csupán tíz percig érvényes, ezt követően nem alkalmas az email cím igazolására.
+
+\subsubsection{Email token megadása}
+
+Ha a megadott email cím valóban a felhasználó tulajdonában áll, akkor megkapja az említett email tokent is, melyet aztán megadhat a CryptID.email weboldalán. Ezzel a felhasználó igazolta az identitását, elindulhat a privát kulcs kinyerése.
+
+\subsubsection{Privát kulcs generálás}
+
+Az identitás ellenőrzését követően a szerver meghatározza a fájl titkosítása során használt publikus paramétereket, valamint a privát kulcs generálásához szükséges mesterkulcsot a titkos fájlban tárolt azonosítón keresztül.  Ezeket a korábban megadott email cím mellett továbbítja a PKG felé, mely a \texttt{CryptID.extract} függvényt meghívva előállítja a publikus kulcs privát párját. Végül a szerver a privát kulcsot elküldi a kliensnek.
+
+\subsubsection{A szimmetrikus kulcs visszafejtése}
+
+A privát kulcs birtokában a kliens megpróbálkozhat a titkos fájlban tárolt szimmetrikus kulcs visszafejtésével. Ehhez a kliens a CrpytID könyvtár \texttt{decrypt} függvényét használja. Amennyiben a privát kulcs helyes, azaz valóban a szóban forgó felhasználó email címével titkosították a szimmetrikus kulcsot, akkor a visszafejtés sikeres lesz. Ellenkező esetben a folyamat itt megáll, a felhasználó nem fér hozzá az eredeti tartalomhoz.
+
+\subsubsection{Az eredeti fájl visszaállítása}
+
+A folyamat utolsó lépése az eredeti fájl tartalmának visszafejtése, mely az előzőleg nyert szimmetrikus kulcs és a WebCrypto API segítségével történik. A memóriában előálló nyílt reprezentációt ezután a felhasználó a háttértárra mentheti. A visszafejtési folyamat ezzel véget ért, visszaállítottuk az eredeti fájlt.
+
+\subsection{Összegzés}
+
+A CryptID.email különböző eszközökön és platformokon átívelő egységes titkosítási megoldást nyújt. A használatához nem szükséges sem előzetes kulcscsere, sem a PKI (\textit{public key infrastructure}) használata, hiszen a továbbítandó fájlok titkosításához csupán a címzett email címét kell megadnunk.
+
+
+\section{Esettanulmány – Személyre szabott zárthelyi}
+\label{Section::Applications::Zarthelyi}
+
+Míg az előző alkalmazás a CryptID hordozható és könnyen használható voltát demonstrálta, addig a személyre szabott zárthelyit leíró rövid esettanulmány elsődleges célja a metaadatok beágyazásának bemutatása. Tapasztalataink szerint a metaadatok leginkább egy adott szakterületen belül lehetnek hasznosak, ezért kézenfekvő választás volt az esettanulmány témájának az általunk jól ismert zárthelyi dolgozatok világa.
+
+Az alkalmazás hallgatónként egyedi elektronikus feladatsorok összeállítását teszi lehetővé, melyek a titkosításnak köszönhetően akár napokkal a dolgozat időpontja előtt elhelyezhetők az egyetemi számítógépeken.
+
+\subsection{Motiváció}
+
+A motiváció a csalások megelőzésében gyökerezik: úgy gondoljuk, hogy a hálózati hozzáférés korlátozásával szemben sokkal hatásosabb eszközt jelent a visszaélések megakadályozásában, ha minden hallgató eltérő feladatsorral rendelkezik. Ennek kezelése azonban a különböző feladatsorok előállításán és ellenőrzésén felül további problémákat is felvet. Ahhoz, hogy ez az elképzelés valóban csökkentse a csalások számát, biztosítani kell, hogy minden hallgató csak a saját feladatsorához férjen hozzá és csak a zárthelyi időpontjában. 
+
+Úgy gondoltuk, hogy erre a célra a CryptID biztosította IBE egy valódi megoldást nyújthat.
+
+\subsection{Megvalósítás}
+
+A rendszer elméleti megvalósítását a publikus kulcs megtervezésén keresztül mutatjuk be. A következőkben egyenként hozzáadunk három mezőt a publikus kulcshoz, kifejtve egyúttal az adott mező implementációval való kapcsolatát. A publikus kulcs tartalmának ilyen módon történő leírása teret enged az alkalmazás összes fontos aspektusának bemutatására.
+
+\subsubsection{Neptun-kód}
+
+A publikus kulcs nélkülözhetetlen összetevője egy, a hallgatók azonosítására szolgáló mező. Természetes választás a Neptun-kód, mellyel Karunk minden hallgatója rendelkezik. Előnyös tulajdonsága továbbá, hogy ellenőrzése már kiépített infrastruktúrán keresztül megtehető: a privát kulcs generálása előtt a hallgató a hálózati azonosítóját használva bejelentkezik, ezzel igazolva az identitását.
+
+Önmagában mindazonáltal a Neptun-kód nem elégséges. Ha a feladatsort csak a címzett hallgató azonosítójával titkosítjuk, akkor a visszafejtéshez használt privát kulcs tetszőleges, a hallgatónak szánt feladatsor visszafejtésére alkalmas lesz!
+
+\subsubsection{Dátum}
+
+Érdemes tehát az előbb említett probléma megakadályozására egy újabb mezővel, a dátummal kiegészíteni a publikus kulcsot. Titkosításkor a Neptun-kód mellett a zárthelyi dolgozat dátumát is felhasználjuk, a privát kulcs generálása előtt pedig a rendszer automatikusan elhelyezi az aktuális dátumot a publikus kulcsban. Ez rendkívül egyszerűen megtehető, hiszen csak egy JSON objektumot kell egy újabb mezővel kiegészíteni.
+
+Gondot jelenthet ugyanakkor, amennyiben a hallgató egy napon több zárthelyit is ír. Erre egy lehetséges válasz a publikus kulcsban elhelyezett dátum finomságának növelése, például \textit{év-hónap-nap} helyett \textit{év-hónap-nap-óra} mezők használatával. Jobb megoldást kínál azonban a publikus kulcs további bővítése.
+
+\subsubsection{Tárgy}
+
+A bővítés ötlete azon alapszik, hogy a titkosításhoz felhasználhatjuk a szóban forgó tárgy nevét is. Nem szabad azonban elfelejteni, hogy csak olyan mezőt érdemes elhelyeznünk a publikus kulcsban, melyet aztán a privát kulcs generálásakor ellenőrizni tudunk.
+
+A \textit{tárgy} mezőt ezért a dátumhoz hasonlóan közvetlenül a szerveroldalon helyezzük el a publikus kulcsban, a privát kulcs generálása előtt, megkerülve ezzel az ellenőrzés szükségességét. Ekkor azonban biztosítani kell, hogy a mező értéke megbízható forrásból származzék. Ehhez a hallgató által a zárthelyi megírásához használt számítógép IP címe nyújthat alapot. Ha az IP cím alapján meghatározható a terem, ahol az eszköz elhelyezkedik, akkor ezt az információt a teremfoglalási adatbázissal összekapcsolva egyértelműen meg tudjuk mondani, hogy a hallgató épp milyen tárgyhoz kötődő zárthelyin vesz részt.
+
+Ez a mező tehát a fizikai hely közvetett ellenőrzésének lehetőségét nyújtja.
+
+\subsection{Összegzés}
+
+A vázolt alkalmazás garantálja, hogy az egyes feladatsorok visszafejtése csak a kívánt hallgató által, a kívánt időben és helyen végezhető el. Mindezen követelmények kikényszerítése automatikusan, a publikus kulcsban elhelyezett metaadatok segítségével történik.
+
+Ennek köszönhetően a dolgozatokhoz használt feladatsorok jóval a zárthelyi tényleges időpontja előtt elhelyezhetők a számítógépeken, valamint akár hálózati korlátozás is alkalmazható – csupán a PKG-hez történő hozzáférést kell biztosítani.
+
+Mindamellett nem szabad elfelejtkeznünk arról, hogy CryptID alternatívája lehet az egyszerű szimmetrikus titkosítás alkalmazása: a feladatsorok előállításával egy időben minden feladatsorhoz generálunk egy szimmetrikus kulcsot, melyhez a hallgató csak sikeres azonosítás után férhet hozzá. Csakhogy az IBE egyik lehetséges alkalmazási területét épp az ilyen, sok szimmetrikus kulcs menedzselését igénylő rendszerek kiváltása jelenti, hiszen a mesterkulcson felül semmilyen más kulcs tárolására nincsen szükség.

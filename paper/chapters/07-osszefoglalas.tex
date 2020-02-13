@@ -1,0 +1,21 @@
+\chapter{Összefoglalás}
+
+A dolgozatunkban a Boneh-Franklin IBE egy újszerű megvalósítását mutattuk be, előbb a matematikai alapokat, aztán az implementáció részleteit kifejtve. Az elkészült könyvtár célja, hogy az elérhető megvalósítások valós alternatívája legyen, egyedi jellemzőinek köszönhetően.
+
+\section{A CryptID jellemzői}
+
+A CryptID újdonságtartalommal bíró sajátosságai két irányból is megközelíthetők, előbb a technológiai alapokat, majd az IBE rendszert tekintve. A könyvtár egyedülálló karakterisztikája a hordozhatóság: a WebAssembly biztosította platformfüggetlenségre építve asztali, mobil és IoT eszközökön is elérhető titkosítási szolgáltatást nyújt. A hordozhatóság egyszerű integrálhatósággal párosul, mely megkönnyíti a dolgozatban ismertetetthez hasonló webes vagy asztali alkalmazások elkészítését.
+
+Hangsúlyos a publikus kulcs szerepe is: az IBE egyedülálló tulajdonsága, hogy a publikus kulcs valójában egy azonosító; ezt bővíti ki a CryptID metaadatok hozzáadásal, ráadásul mindezt strukturált, könnyen kezelhető formában. Ez egészen új szakterület-specifikus alkalmazások előtt nyitja meg az utat, melyre egy szemléletes példa a \dotref{Section::Applications::Zarthelyi} alfejezetben bemutatott személyre szabott zárthelyi.
+
+A funkcionalitás mellett nagy figyelmet fordítottunk az implementáció megfelelő teljesítményére is, hiszen a kriptográfiai programkönyvtárak összehasonlításának egyik kiemelt szempontja a különböző erőforrásokkal (memória, processzoridő) való hatékony gazdálkodás. Ez még hangsúlyosabb szerepet nyer, ha a korlátozott erőforrásokkal rendelkező mobil eszközöket tekintjük. A \dotref{Section::Performance} alfejezetben elemzett mérések tanúsága szerint a CryptID kielégítő futási idővel rendelkezik asztali és mobil eszközökön is.
+
+\section{Továbblépési lehetőségek}
+
+A könyvtár további fejlesztése számos irányban folytatható. Kiemelkedik ezek közül azonban a korábban részletezett optimalizációk által kijelölt irány, melynek mentén a CryptID futási ideje nagyságrendekkel csökkenthető. Ilyen például a Heuberger-Mazzoli elliptikus skaláris szorzás, a rögzített paraméterek használata, vagy a hatékonyabb Tate párosítás alkalmazása. Ezen felül teljesítménynövekedést érhetünk el különböző mikrooptimalizációk segítségével is.
+
+Nemcsak a futási idő, hanem a bináris méretének csökkentése is fontos szempont, hiszen ezzel mérsékelhető a hálózati adatforgalom nagysága. Tekintve, hogy a CryptID méretének jelentős részét a külső könyvtárak (GMP, OpenSSL) teszik ki, így szeretnénk megvizsgálni ezek eltávolításának, kiváltásának vagy tömörítésének lehetőségét. Utóbbira hatékony megoldást jelenthet például az úgynevezett \textit{tree-shaking}, mely a nem használt kódrészletek eldobását jelenti.
+
+Annak érdekében, hogy a CryptID valós alkalmazások alapját szolgáltathassa, növelnünk kell az ismertségét, melyet különböző konferenciákon történő részvétellel szeretnénk elősegíteni. Ezek egyúttal kiváló alkalmat kínálnak a visszajelzések, fejlesztési lehetőségek gyűjtésére is.
+
+A titkosításon túl további azonosító alapú rendszerek is léteznek, amelyek magja rendkívül hasonló. Ilyenek például az Identity-based Signature \cite{Yi::IBS} és Identity-based Cloud Authentication Protocol \cite{Huszti::IdentityBasedCloudAuthentication}. A hasonlóság miatt megfontolandó az efféle rendszerek implementációja is, hiszen a CryptID magában hordoz számos olyan réteget, amelyek a további sémák fejlesztése során módosítás nélkül vagy kis módosítással újrahasználhatók.
